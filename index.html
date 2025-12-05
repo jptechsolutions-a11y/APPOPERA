@@ -560,14 +560,20 @@
             animation: spin 1s linear infinite;
         }
         
+        /* ESTILO ATUALIZADO PARA BADGE DE CARGA */
         .carga-badge {
-            background: #DBEAFE;
-            color: #1E40AF;
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-size: 0.65rem;
-            font-weight: bold;
-            margin-top: 4px;
+            background: #eff6ff; /* Azul bem claro */
+            color: #1e40af; /* Azul escuro */
+            border: 1px solid #bfdbfe; /* Borda suave */
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 8px;
+            display: block; /* Garante que ocupe a linha toda se necessário */
+            white-space: normal; /* Permite quebra de linha */
+            word-break: break-word; /* Quebra palavras muito longas */
+            line-height: 1.4;
         }
 
         /* Informações de credencial no header */
