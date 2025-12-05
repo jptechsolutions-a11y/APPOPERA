@@ -577,7 +577,7 @@ function applyFilters() {
                 exp.lider_nome,
                 exp.doca_nome,
                 exp.observacoes || '',
-                exp.numeros_carga ? exp.numeros_carga.join(' ').toLowerCase() : ''
+                exp.numeros_carga ? (Array.isArray(exp.numeros_carga) ? exp.numeros_carga.join(' ') : String(exp.numeros_carga)) : ''
             ].join(' ').toLowerCase();
             
             if (!searchableText.includes(filtroBusca)) {
@@ -706,13 +706,26 @@ function renderExpeditions() {
             urgencyBadge = `<span class="urgency-badge urgency-4h">⏰ +4h</span>`;
         }
 
-        // LÓGICA DE EXIBIÇÃO DA CARGA ATUALIZADA
-        // Garante que é array, mesmo se vier diferente ou nulo
-        const cargas = Array.isArray(exp.numeros_carga) ? exp.numeros_carga : [];
+        // LÓGICA DE EXIBIÇÃO DA CARGA MAIS ROBUSTA
+        let cargas = [];
+        if (Array.isArray(exp.numeros_carga)) {
+            cargas = exp.numeros_carga;
+        } else if (typeof exp.numeros_carga === 'string') {
+             // Caso venha como string (ex: "123, 456" ou "{123,456}" formato Postgres array as string)
+             // Remove chaves e aspas que possam vir do banco
+             const clean = exp.numeros_carga.replace(/[{}"]/g, '');
+             if (clean) {
+                 cargas = clean.split(',').map(s => s.trim()).filter(s => s);
+             }
+        }
+        
+        // Remove itens vazios
+        cargas = cargas.filter(c => c && c.toString().trim() !== '');
+
         const numerosCargaBadge = cargas.length > 0
             ? `<div class="carga-badge">
-                <i data-feather="package" style="width: 12px; height: 12px; margin-right: 4px; display: inline-block;"></i>
-                <strong>Cargas:</strong> ${cargas.join(', ')}
+                <i data-feather="package" style="width: 14px; height: 14px; margin-top: 2px;"></i>
+                <span><strong>Cargas:</strong> ${cargas.join(', ')}</span>
                </div>`
             : '';
 
