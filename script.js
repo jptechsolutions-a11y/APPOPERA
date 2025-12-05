@@ -499,18 +499,7 @@ async function loadExpeditions() {
         // Uso do proxy e filtro de filial implícito no GET
         const expeditions = await supabaseRequest(`expeditions?data_hora=gte.${dataConsulta}T00:00:00&data_hora=lte.${dataConsulta}T23:59:59&order=data_hora.desc`);
         
-        // LOG PARA DEBUG (JP OLHE AQUI NO CONSOLE)
-        console.log("--- DEBUG START: DADOS ORIGINAIS DO BANCO ---");
-        console.log("Expedições encontradas:", expeditions.length);
-        if (expeditions.length > 0) {
-            console.log("Primeira expedição (exemplo):", expeditions[0]);
-            console.log("Campos da primeira expedição:", Object.keys(expeditions[0]));
-            // Tenta encontrar campos que pareçam com carga
-            const example = expeditions[0];
-            if (example.numeros_carga) console.log("Campo numeros_carga existe:", example.numeros_carga);
-            else console.warn("Campo numeros_carga NÃO encontrado no objeto!");
-        }
-        console.log("--- DEBUG END ---");
+        console.log(`--- CARREGANDO EXPEDIÇÕES: ${expeditions.length} encontradas ---`);
 
         const items = await supabaseRequest('expedition_items'); 
         
@@ -725,31 +714,33 @@ function renderExpeditions() {
             urgencyBadge = `<span class="urgency-badge urgency-4h">⏰ +4h</span>`;
         }
 
-        // LÓGICA DE EXIBIÇÃO DA CARGA MAIS ROBUSTA E COM DEBUG VISUAL
+        // --- LÓGICA DE CARGA REVISADA ---
         let cargas = [];
-        let debugRaw = exp.numeros_carga; // Para debug se necessário
-
+        // Normalização agressiva para garantir que pegamos o dado
         if (Array.isArray(exp.numeros_carga)) {
             cargas = exp.numeros_carga;
         } else if (typeof exp.numeros_carga === 'string') {
-             // Caso venha como string (ex: "123, 456" ou "{123,456}" formato Postgres array as string)
-             // Remove chaves e aspas que possam vir do banco
+             // Remove caracteres estranhos que o banco possa enviar
              const clean = exp.numeros_carga.replace(/[{}"]/g, '');
              if (clean) {
-                 cargas = clean.split(',').map(s => s.trim()).filter(s => s);
+                 cargas = clean.split(',').map(s => s.trim());
              }
         }
         
-        // Remove itens vazios
+        // Limpa vazios
         cargas = cargas.filter(c => c && c.toString().trim() !== '');
 
-        const numerosCargaBadge = cargas.length > 0
-            ? `<div class="carga-badge">
-                <i data-feather="package" style="width: 14px; height: 14px; margin-top: 2px;"></i>
-                <span><strong>Cargas:</strong> ${cargas.join(', ')}</span>
-               </div>`
-            : ''; // Se estiver vazio, não mostra nada
+        // LOG ESPIÃO: Veja no console o que está acontecendo com CADA item
+        console.log(`Renderizando ${exp.loja_nome} (ID: ${exp.id}) | Cargas encontradas:`, cargas);
 
+        // Gera o HTML da badge - SIMPLIFICADO para evitar erro de renderização
+        const numerosCargaBadge = cargas.length > 0
+            ? `<div class="carga-badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; padding: 6px 8px; border-radius: 6px; font-size: 0.8rem; margin-top: 8px; display: block;">
+                <span style="font-weight: 700;">📦 Cargas:</span> ${cargas.join(', ')}
+               </div>`
+            : '';
+
+        // Alterei o rótulo de pallets de "Carga" para "Vols" (Volumes) para não confundir
         return `
             <div class="expedition-item">
                 <div class="expedition-header">
@@ -764,7 +755,7 @@ function renderExpeditions() {
                 <div class="expedition-details">
                     <strong>⚓ Doca:</strong> ${docaInfo}${ordemInfo}<br>
                     <strong>👤 Conferente:</strong> ${exp.lider_nome}<br>
-                    <strong>📦 Carga:</strong> ${exp.total_pallets}P + ${exp.total_rolltrainers}R${veiculoInfo}
+                    <strong>📦 Vols:</strong> ${exp.total_pallets}P + ${exp.total_rolltrainers}R${veiculoInfo}
                     ${exp.observacoes ? `<br><strong>💬 Obs:</strong> ${exp.observacoes}` : ''}
                     ${numerosCargaBadge}
                 </div>
@@ -772,7 +763,7 @@ function renderExpeditions() {
         `;
     }).join('');
     
-    // Reaplica os ícones
+    // Reaplica os ícones onde possível
     feather.replace();
 }
 
