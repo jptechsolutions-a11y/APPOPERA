@@ -499,6 +499,19 @@ async function loadExpeditions() {
         // Uso do proxy e filtro de filial implícito no GET
         const expeditions = await supabaseRequest(`expeditions?data_hora=gte.${dataConsulta}T00:00:00&data_hora=lte.${dataConsulta}T23:59:59&order=data_hora.desc`);
         
+        // LOG PARA DEBUG (JP OLHE AQUI NO CONSOLE)
+        console.log("--- DEBUG START: DADOS ORIGINAIS DO BANCO ---");
+        console.log("Expedições encontradas:", expeditions.length);
+        if (expeditions.length > 0) {
+            console.log("Primeira expedição (exemplo):", expeditions[0]);
+            console.log("Campos da primeira expedição:", Object.keys(expeditions[0]));
+            // Tenta encontrar campos que pareçam com carga
+            const example = expeditions[0];
+            if (example.numeros_carga) console.log("Campo numeros_carga existe:", example.numeros_carga);
+            else console.warn("Campo numeros_carga NÃO encontrado no objeto!");
+        }
+        console.log("--- DEBUG END ---");
+
         const items = await supabaseRequest('expedition_items'); 
         
         // Lógica de combinação de dados
@@ -541,6 +554,7 @@ async function loadExpeditions() {
 
     } catch (error) {
         document.getElementById('expeditionsList').innerHTML = '<p class="text-center text-red-500">Erro ao carregar expedições</p>';
+        console.error("Erro no loadExpeditions:", error);
     }
 }
 
@@ -572,12 +586,17 @@ function applyFilters() {
         }
         
         if (filtroBusca) {
+            // Garante que numeros_carga seja tratado como string para busca
+            let cargasStr = '';
+            if (Array.isArray(exp.numeros_carga)) cargasStr = exp.numeros_carga.join(' ');
+            else if (typeof exp.numeros_carga === 'string') cargasStr = exp.numeros_carga;
+
             const searchableText = [
                 exp.loja_nome,
                 exp.lider_nome,
                 exp.doca_nome,
                 exp.observacoes || '',
-                exp.numeros_carga ? (Array.isArray(exp.numeros_carga) ? exp.numeros_carga.join(' ') : String(exp.numeros_carga)) : ''
+                cargasStr
             ].join(' ').toLowerCase();
             
             if (!searchableText.includes(filtroBusca)) {
@@ -706,8 +725,10 @@ function renderExpeditions() {
             urgencyBadge = `<span class="urgency-badge urgency-4h">⏰ +4h</span>`;
         }
 
-        // LÓGICA DE EXIBIÇÃO DA CARGA MAIS ROBUSTA
+        // LÓGICA DE EXIBIÇÃO DA CARGA MAIS ROBUSTA E COM DEBUG VISUAL
         let cargas = [];
+        let debugRaw = exp.numeros_carga; // Para debug se necessário
+
         if (Array.isArray(exp.numeros_carga)) {
             cargas = exp.numeros_carga;
         } else if (typeof exp.numeros_carga === 'string') {
@@ -727,7 +748,7 @@ function renderExpeditions() {
                 <i data-feather="package" style="width: 14px; height: 14px; margin-top: 2px;"></i>
                 <span><strong>Cargas:</strong> ${cargas.join(', ')}</span>
                </div>`
-            : '';
+            : ''; // Se estiver vazio, não mostra nada
 
         return `
             <div class="expedition-item">
