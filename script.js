@@ -706,8 +706,14 @@ function renderExpeditions() {
             urgencyBadge = `<span class="urgency-badge urgency-4h">⏰ +4h</span>`;
         }
 
-        const numerosCargaBadge = exp.numeros_carga && exp.numeros_carga.length > 0
-            ? `<div class="carga-badge">Cargas: ${exp.numeros_carga.join(', ')}</div>`
+        // LÓGICA DE EXIBIÇÃO DA CARGA ATUALIZADA
+        // Garante que é array, mesmo se vier diferente ou nulo
+        const cargas = Array.isArray(exp.numeros_carga) ? exp.numeros_carga : [];
+        const numerosCargaBadge = cargas.length > 0
+            ? `<div class="carga-badge">
+                <i data-feather="package" style="width: 12px; height: 12px; margin-right: 4px; display: inline-block;"></i>
+                <strong>Cargas:</strong> ${cargas.join(', ')}
+               </div>`
             : '';
 
         return `
@@ -731,6 +737,9 @@ function renderExpeditions() {
             </div>
         `;
     }).join('');
+    
+    // Reaplica os ícones
+    feather.replace();
 }
 
 function getStatusIcon(statusDescarga) {
