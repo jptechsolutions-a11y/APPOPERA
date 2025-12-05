@@ -567,10 +567,12 @@
             border: 1px solid #bfdbfe; /* Borda suave */
             padding: 6px 8px;
             border-radius: 6px;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: 600;
             margin-top: 8px;
-            display: block; /* Garante que ocupe a linha toda se necessário */
+            display: flex; /* Garante alinhamento com flexbox */
+            align-items: flex-start; /* Alinha icone com topo se houver quebra */
+            gap: 6px;
             white-space: normal; /* Permite quebra de linha */
             word-break: break-word; /* Quebra palavras muito longas */
             line-height: 1.4;
